@@ -39,15 +39,50 @@ import sys
 #   [<body>$content$</body>]
 # }
 
-def readruledict(filein):
+def readruledict(textin):
+	rules = {}
+	text = textin
+	escaped = False
+	mode = "genparse"
+	while (len(text) != 0):
+		eatenchar = text[0]
+		if (eatenchar == "\\" and not(escaped)):
+			escaped = True
+		else:
+			if (mode == "genparse"):
+				if (eatenchar == "@" and not(escaped)):
+					mode = "tagparse"
+					workingtag = "@"
+			elif (mode == "tagparse"):
+				if (eatenchar == "{" and not(escaped)):
+					mode = "genparse"
+					print(workingtag)
+				elif (eatenchar == "(" and not(escaped)):
+					mode = "attribparse"
+					print(workingtag)
+				else:
+					workingtag = workingtag + eatenchar
+			elif (mode == "attribparse"):
+				if (eatenchar == ")" and not(escaped)):
+					mode = "genparse"
+			escaped = False
+		#print(eatenchar, end='')
+		text = text[1:]
 	print("yup those sure are rules!")
 
 if __name__ == "__main__":
 	if ((len(sys.argv) == 1) or (sys.argv[1] in ["-h","-?","--help"])):
 		print("Usage: webcreate <--listing listing_file | data_file> [output_template ...]")
 	else:
-		
-
+		if (sys.argv[1] == "--listing"):
+			print("#TODO")
+		else:
+			data_in_name     = sys.argv[1]
+			template_in_name = sys.argv[2]
+			print(data_in_name, template_in_name)
+			with open(template_in_name) as rulef:
+				rules = rulef.read()
+			ruledict = readruledict(rules)
 
 
 
