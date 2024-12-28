@@ -2,7 +2,7 @@ import sys
 
 #how this work??
 #take a data file, laid out as follows, where 
-#tags are composed of "~tagName(attribute:'value',...){ tagContent }" :
+#tags are composed of "~tagName(attribute:value,...){ tagContent }" :
 # 
 # ~webcreate{
 #   ~head{
@@ -14,17 +14,17 @@ import sys
 #       ~title{welcome to my sample page!}
 #       ~date{}
 #       ~h3{Sample Links (World's Finest!) :}
-#       ~blacklink(href:'http://example.com'){example.com}
-#       ~blacklink(href:'http://example.com'){also example.com ~hot{}}
+#       ~blacklink(href:http://example.com){example.com}
+#       ~blacklink(href:http://example.com){also example.com ~hot{}}
 #     }
 #   }
 # }
 #
 #
 #and a rule file, where tags are composed of
-#"@tagName(attribute:'defaultValue',...){ subRules [content] }":
+#"@tagName(attribute:defaultValue,...){ subRules [content] }":
 #
-# @outputformat(filename:'input',extension:'wcr'){[$filename$.html]}
+# @outputformat(filename:input){[$filename$.html]}
 # @webcreate{[<!DOCTYPE html>\n<html lang="en">$content$</html>]}
 # @head{
 #   @title{[<title>$content$</title>]}
@@ -34,7 +34,7 @@ import sys
 #   @navbar{[<div class='navbar' id='navbar'>whoops, y'gotta turn on javascript!</navbar>\n<script src='/js/navbar.js'></script>]}
 #   @main{[<div class='content'>$content$</div>]}
 #   @title{[<div class='header'>$content$</div>]}
-#   @blacklink(href:''){[<a href='$href$' class='back'>$content$</a>]}
+#   @blacklink(href:){[<a href='$href$' class='back'>$content$</a>]}
 #   (other rules omitted for brevity)
 #   [<body>$content$</body>]
 # }
@@ -46,6 +46,7 @@ def parsetree(textin, tagchar, bracket=False):
 	attribmode = "readattrib"
 	QDRL = []
 	treestack = [[]]
+	content = ""
 	while (len(text) != 0):
 		eatenchar = text[0]
 		if (eatenchar == "\\" and not(escaped)):
@@ -55,14 +56,23 @@ def parsetree(textin, tagchar, bracket=False):
 				if (eatenchar == tagchar and not(escaped)):
 					mode = "tagparse"
 					workingtag = "@"
-				elif (eatenchar == "[" and not(escaped)):
+					if (not(bracket)):
+						treestack[-1].append(content)
+						content = ""
+				elif (eatenchar == "[" and bracket and not(escaped)):
 					mode = "contentparse"
+					content = ""
 				elif (eatenchar == "}" and not(escaped)):
+					if (not(bracket)):
+						treestack[-1].append(content)
+						content = ""
 					thistag = treestack.pop()
 					try:
 						treestack[-1].append(thistag)
 					except:
 						print(treestack, thistag)
+				elif (not(bracket)):
+					content = content + eatenchar
 			elif (mode == "tagparse"):
 				if (eatenchar == "{" and not(escaped)):
 					mode = "genparse"
@@ -82,6 +92,7 @@ def parsetree(textin, tagchar, bracket=False):
 			elif (mode == "attribparse"):
 				if (eatenchar == ")" and not(escaped)):
 					mode = "genparse"
+					attribs[attrib] = attribvalue
 					treestack[-1].append(attribs)
 				elif (attribmode == "readattrib"):
 					if (eatenchar == ":" and not(escaped)):
@@ -92,11 +103,17 @@ def parsetree(textin, tagchar, bracket=False):
 				elif (attribmode == "readvalue"):
 					if (eatenchar == "," and not(escaped)):
 						attribs[attrib] = attribvalue
+						attrib = ""
+						attribvalue = ""
+						attribmode = "readattrib"
 					else:
 						attribvalue = attribvalue + eatenchar
 			elif (mode == "contentparse"):
 				if (eatenchar == "]" and not(escaped)):
 					mode = "genparse"
+					treestack[-1].append(content)
+				else:
+					content = content + eatenchar
 			escaped = False
 		#print(eatenchar, end='')
 		text = text[1:]
@@ -106,6 +123,9 @@ def parsetree(textin, tagchar, bracket=False):
 def printtree(tree, nest=0):
 	for branch in tree:
 		if (type(branch) is list):
+			for i in range(nest):
+				print("  ", end='')
+			print("[")
 			printtree(branch, nest + 1)
 		else:
 			for i in range(nest):
@@ -116,6 +136,10 @@ def readruledict(textin):
 	tree = parsetree(textin, "@", True)
 	printtree(tree)
 	rules = {}
+	def makedict(treein):
+		thisdict = {}
+		for item in treein:
+			pass
 	print("yup those sure are rules!")
 
 if __name__ == "__main__":

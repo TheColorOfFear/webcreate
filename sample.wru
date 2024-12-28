@@ -1,4 +1,4 @@
-@outputformat(filename:'input',extension:'wcr'){[$filename$.html]}
+@outputformat(filename:input,extension:wcr){[$filename$.html]}
 @webcreate{[<!DOCTYPE html>\n<html lang="en">$content$</html>]}
 @head{
   @title{[<title>$content$</title>]}
@@ -8,7 +8,7 @@
   @navbar{[<div class='navbar' id='navbar'>whoops, y'gotta turn on javascript!</navbar>\n<script src='js/navbar.js'></script>]}
   @main{[<div class='content'>$content$</div>]}
   @title{[<div class='header'>$content$</div>]}
-  @blacklink(href:''){[<a href='$href$' class='back'>$content$</a>]}
+  @blacklink(href:){[<a href='$href$' class='back'>$content$</a>]}
   @date{[<h3 id="date">[date]</h3>]}
   @hot{[<img src="imghot.png">]}
   [<body>$content$<script>
