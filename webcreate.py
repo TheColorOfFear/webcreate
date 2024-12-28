@@ -39,35 +39,83 @@ import sys
 #   [<body>$content$</body>]
 # }
 
-def readruledict(textin):
-	rules = {}
+def parsetree(textin, tagchar, bracket=False):
 	text = textin
 	escaped = False
 	mode = "genparse"
+	attribmode = "readattrib"
+	QDRL = []
+	treestack = [[]]
 	while (len(text) != 0):
 		eatenchar = text[0]
 		if (eatenchar == "\\" and not(escaped)):
 			escaped = True
 		else:
 			if (mode == "genparse"):
-				if (eatenchar == "@" and not(escaped)):
+				if (eatenchar == tagchar and not(escaped)):
 					mode = "tagparse"
 					workingtag = "@"
+				elif (eatenchar == "[" and not(escaped)):
+					mode = "contentparse"
+				elif (eatenchar == "}" and not(escaped)):
+					thistag = treestack.pop()
+					try:
+						treestack[-1].append(thistag)
+					except:
+						print(treestack, thistag)
 			elif (mode == "tagparse"):
 				if (eatenchar == "{" and not(escaped)):
 					mode = "genparse"
-					print(workingtag)
+					#print(workingtag)
+					treestack.append([workingtag])
+					treestack[-1].append({})
+					#print(treestack)
 				elif (eatenchar == "(" and not(escaped)):
 					mode = "attribparse"
-					print(workingtag)
+					#print(workingtag)
+					attribs = {}
+					attribmode = "readattrib"
+					attrib = ""
+					treestack.append([workingtag])
 				else:
 					workingtag = workingtag + eatenchar
 			elif (mode == "attribparse"):
 				if (eatenchar == ")" and not(escaped)):
 					mode = "genparse"
+					treestack[-1].append(attribs)
+				elif (attribmode == "readattrib"):
+					if (eatenchar == ":" and not(escaped)):
+						attribmode = "readvalue"
+						attribvalue = ""
+					else:
+						attrib = attrib + eatenchar
+				elif (attribmode == "readvalue"):
+					if (eatenchar == "," and not(escaped)):
+						attribs[attrib] = attribvalue
+					else:
+						attribvalue = attribvalue + eatenchar
+			elif (mode == "contentparse"):
+				if (eatenchar == "]" and not(escaped)):
+					mode = "genparse"
 			escaped = False
 		#print(eatenchar, end='')
 		text = text[1:]
+	QDRL = treestack[-1]
+	return(QDRL)
+
+def printtree(tree, nest=0):
+	for branch in tree:
+		if (type(branch) is list):
+			printtree(branch, nest + 1)
+		else:
+			for i in range(nest):
+				print("  ", end='')
+			print(branch)
+
+def readruledict(textin):
+	tree = parsetree(textin, "@", True)
+	printtree(tree)
+	rules = {}
 	print("yup those sure are rules!")
 
 if __name__ == "__main__":
