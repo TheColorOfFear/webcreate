@@ -1,0 +1,15 @@
+~webcreate{
+  ~head{
+    ~title{sample page}
+  }
+  ~body{
+    ~navbar{}
+    ~main{
+      ~title{welcome to my sample page!}
+      ~date{}
+      ~h3{Sample Links (World's Finest!) :}
+      ~blacklink(href:'http://example.com'){example.com}
+      ~blacklink(href:'http://example.com'){also example.com ~hot{}}
+    }
+  }
+}
