@@ -170,8 +170,8 @@ def readruledict(textin):
 
 def applyruledict(textin, ruledict):
 	tree = parsetree(textin, "~")
-	printtree(tree)
-	print(tree)
+	#printtree(tree)
+	#print(tree)
 	def recurse(treein, initial=False, taghistory=[]):
 		textback = ""
 		#print(treein[0])
@@ -198,7 +198,7 @@ def applyruledict(textin, ruledict):
 					if (tag in testdict):
 						ruledictcheck.append(testdict[tag])
 		keepchecking = True
-		if tagname == '@title':
+		if (tagname == '@title' and debuginfo):
 			print(taghistory)
 			for item in ruledictcheck:
 				print(item, "\n------\n")
@@ -209,9 +209,16 @@ def applyruledict(textin, ruledict):
 				keepchecking = False
 		if (validruledict != None):
 			textback = validruledict[tagname]['content'].replace("$content$", textback)
-			print("!", end='')
+			#print("!", end='')
+			#print(validruledict)
+			for checkattrib in validruledict[tagname]['attributes']:
+				#print(checkattrib, validruledict[tagname]['$' + checkattrib + '$'])
+				if (checkattrib in treein[1]):
+					textback = textback.replace('$' + checkattrib + '$', treein[1][checkattrib])
+				else:
+					textback = textback.replace('$' + checkattrib + '$', validruledict[tagname]['$' + checkattrib + '$'][checkattrib])
 		##TODO : replace $[SMTH]$ in the textback with attribs and then stuff it in the tag's $[output]$
-		print('>' + treein[0])
+		#print('>' + treein[0])
 		return textback
 	return recurse(tree, initial=True)
 
@@ -224,7 +231,7 @@ if __name__ == "__main__":
 		else:
 			data_in_name     = sys.argv[1]
 			template_in_name = sys.argv[2]
-			print(data_in_name, template_in_name)
+			print(data_in_name, template_in_name, end=' --> ')
 			with open(template_in_name) as rulef:
 				rules = rulef.read()
 			#rules = '@1{@2{[<2>$content$</2>]}[<1>$content$</1>]}@4{[<4>$content$</4>]}@5{[erm..5? (also 3 is missing on purpose)]}'
@@ -232,7 +239,12 @@ if __name__ == "__main__":
 			with open(data_in_name) as dataf:
 				textin = dataf.read()
 			#textin = '~1{~2{~3{..~4{}..}..~5{}}}'
-			print(applyruledict(textin, ruledict))
+			textout = applyruledict(textin, ruledict)
+			name = data_in_name.rpartition('.')
+			data_out_name = applyruledict("~outputformat(filename:"+name[0]+",extension:"+name[1]+"){}", ruledict)
+			print(data_out_name)
+			with open(data_out_name, 'wt') as dataf:
+				dataf.write(textout)
 
 
 
