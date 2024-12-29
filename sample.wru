@@ -5,7 +5,7 @@
   [<head><link href="style.css" rel="stylesheet" type="text/css" media="all">$content$</head>]
 }
 @body{
-  @navbar{[<div class='navbar' id='navbar'>whoops, y'gotta turn on javascript!</navbar>\n<script src='js/navbar.js'></script>]}
+  @navbar{[<div class='navbar' id='navbar'>whoops, y'gotta turn on javascript!</navbar><script src='js/navbar.js'></script>]}
   @main{[<div class='content'>$content$</div>]}
   @title{[<div class='header'>$content$</div>]}
   @blacklink(href:){[<a href='$href$' class='back'>$content$</a>]}
