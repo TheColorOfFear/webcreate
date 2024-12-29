@@ -172,22 +172,48 @@ def applyruledict(textin, ruledict):
 	tree = parsetree(textin, "~")
 	printtree(tree)
 	print(tree)
-	def recurse(treein, initial=False):
+	def recurse(treein, initial=False, taghistory=[]):
 		textback = ""
-		print(treein[0])
+		#print(treein[0])
 		tagname = treein[0]
 		begin = 2
 		if (initial):
 			begin = 0
 		for item in treein[begin:]:
 			if (type(item) is list):
-				textback = textback + recurse(item)
+				taghistorytemp = taghistory.copy()
+				taghistorytemp.append(tagname)
+				textback = textback + recurse(item, taghistory=taghistorytemp)
 			elif (type(item) is str):
 				textback = textback + item
+		
+		#check if our tag is anywhere in the ruledict, starting deepest first
+		validruledict = None
+		ruledictcheck = []
+		ruledictcheck.append(ruledict)
+		keepchecking = True
+		for tag in taghistory:
+			if (keepchecking):
+				for testdict in ruledictcheck:
+					if (tag in testdict):
+						ruledictcheck.append(testdict[tag])
+		keepchecking = True
+		if tagname == '@title':
+			print(taghistory)
+			for item in ruledictcheck:
+				print(item, "\n------\n")
+		while (keepchecking and len(ruledictcheck) > 0):
+			checkdict = ruledictcheck.pop()
+			if (tagname in checkdict):
+				validruledict = checkdict
+				keepchecking = False
+		if (validruledict != None):
+			textback = validruledict[tagname]['content'].replace("$content$", textback)
+			print("!", end='')
 		##TODO : replace $[SMTH]$ in the textback with attribs and then stuff it in the tag's $[output]$
 		print('>' + treein[0])
 		return textback
-	return recurse(tree, True)
+	return recurse(tree, initial=True)
 
 if __name__ == "__main__":
 	if ((len(sys.argv) == 1) or (sys.argv[1] in ["-h","-?","--help"])):
@@ -201,10 +227,11 @@ if __name__ == "__main__":
 			print(data_in_name, template_in_name)
 			with open(template_in_name) as rulef:
 				rules = rulef.read()
+			#rules = '@1{@2{[<2>$content$</2>]}[<1>$content$</1>]}@4{[<4>$content$</4>]}@5{[erm..5? (also 3 is missing on purpose)]}'
 			ruledict = readruledict(rules)
 			with open(data_in_name) as dataf:
 				textin = dataf.read()
-			textin = '~1{~2{~3{..~4{}..}..~5{}}}'
+			#textin = '~1{~2{~3{..~4{}..}..~5{}}}'
 			print(applyruledict(textin, ruledict))
 
 
