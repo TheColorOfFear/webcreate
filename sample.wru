@@ -1,5 +1,5 @@
 @outputformat(filename:input,extension:wcr){[$filename$.html]}
-@webcreate{[<!DOCTYPE html>\n<html lang="en">$content$</html>]}
+@webcreate{[<!DOCTYPE html><html lang="en">$content$</html>]}
 @head{
   @title{[<title>$content$</title>]}
   [<head><link href="style.css" rel="stylesheet" type="text/css" media="all">$content$</head>]
