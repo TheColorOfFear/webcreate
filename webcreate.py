@@ -39,6 +39,8 @@ import sys
 #   [<body>$content$</body>]
 # }
 
+debuginfo = False
+
 def parsetree(textin, tagchar, bracket=False):
 	text = textin
 	escaped = False
@@ -70,7 +72,8 @@ def parsetree(textin, tagchar, bracket=False):
 					try:
 						treestack[-1].append(thistag)
 					except:
-						print(treestack, thistag)
+						if (debuginfo):
+							print(treestack, thistag)
 				elif (not(bracket)):
 					content = content + eatenchar
 			elif (mode == "tagparse"):
@@ -91,7 +94,7 @@ def parsetree(textin, tagchar, bracket=False):
 					workingtag = workingtag + eatenchar
 			elif (mode == "attribparse"):
 				if (eatenchar == ")" and not(escaped)):
-					mode = "genparse"
+					mode = "wait-obrace"
 					attribs[attrib] = attribvalue
 					treestack[-1].append(attribs)
 				elif (attribmode == "readattrib"):
@@ -114,6 +117,9 @@ def parsetree(textin, tagchar, bracket=False):
 					treestack[-1].append(content)
 				else:
 					content = content + eatenchar
+			elif (mode == "wait-obrace"):
+				if (eatenchar == "{" and not(escaped)):
+					mode = "genparse"
 			escaped = False
 		#print(eatenchar, end='')
 		text = text[1:]
@@ -127,6 +133,9 @@ def printtree(tree, nest=0):
 				print("  ", end='')
 			print("[")
 			printtree(branch, nest + 1)
+			for i in range(nest):
+				print("  ", end='')
+			print("]")
 		else:
 			for i in range(nest):
 				print("  ", end='')
@@ -134,13 +143,51 @@ def printtree(tree, nest=0):
 
 def readruledict(textin):
 	tree = parsetree(textin, "@", True)
-	printtree(tree)
+	if (debuginfo):
+		printtree(tree)
 	rules = {}
-	def makedict(treein):
+	def makedict(treein, initial=False):
 		thisdict = {}
 		for item in treein:
-			pass
-	print("yup those sure are rules!")
+			if (type(item) is dict):
+				attriblist = []
+				for key in item:
+					attriblist.append(key)
+					thisdict["$" + key + "$"] = item[key]
+					#print("$" + key + "$", item[key])
+				thisdict["attributes"] = attriblist
+			elif (type(item) is list):
+				thisdict.update(makedict(item))
+			elif (type(item) is str):
+				thisdict["content"] = item
+		if (initial):
+			return thisdict
+		else:
+			return {treein[0] : thisdict}
+	outdict = makedict(tree, True)
+	return outdict
+	#print("yup those sure are rules!")
+
+def applyruledict(textin, ruledict):
+	tree = parsetree(textin, "~")
+	printtree(tree)
+	print(tree)
+	def recurse(treein, initial=False):
+		textback = ""
+		print(treein[0])
+		tagname = treein[0]
+		begin = 2
+		if (initial):
+			begin = 0
+		for item in treein[begin:]:
+			if (type(item) is list):
+				textback = textback + recurse(item)
+			elif (type(item) is str):
+				textback = textback + item
+		##TODO : replace $[SMTH]$ in the textback with attribs and then stuff it in the tag's $[output]$
+		print('>' + treein[0])
+		return textback
+	return recurse(tree, True)
 
 if __name__ == "__main__":
 	if ((len(sys.argv) == 1) or (sys.argv[1] in ["-h","-?","--help"])):
@@ -155,9 +202,10 @@ if __name__ == "__main__":
 			with open(template_in_name) as rulef:
 				rules = rulef.read()
 			ruledict = readruledict(rules)
-
-
-
+			with open(data_in_name) as dataf:
+				textin = dataf.read()
+			textin = '~1{~2{~3{..~4{}..}..~5{}}}'
+			print(applyruledict(textin, ruledict))
 
 
 
