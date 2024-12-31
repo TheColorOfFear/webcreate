@@ -230,21 +230,23 @@ if __name__ == "__main__":
 			print("#TODO")
 		else:
 			data_in_name     = sys.argv[1]
-			template_in_name = sys.argv[2]
-			print(data_in_name, template_in_name, end=' --> ')
-			with open(template_in_name) as rulef:
-				rules = rulef.read()
-			#rules = '@1{@2{[<2>$content$</2>]}[<1>$content$</1>]}@4{[<4>$content$</4>]}@5{[erm..5? (also 3 is missing on purpose)]}'
-			ruledict = readruledict(rules)
+			template_in_names = sys.argv[2:]
+			
 			with open(data_in_name) as dataf:
 				textin = dataf.read()
-			#textin = '~1{~2{~3{..~4{}..}..~5{}}}'
-			textout = applyruledict(textin, ruledict)
-			name = data_in_name.rpartition('.')
-			data_out_name = applyruledict("~outputformat(filename:"+name[0]+",extension:"+name[1]+"){}", ruledict)
-			print(data_out_name)
-			with open(data_out_name, 'wt') as dataf:
-				dataf.write(textout)
+			
+			for template_in_name in template_in_names:
+				print(data_in_name, template_in_name, end=' --> ')
+				with open(template_in_name) as rulef:
+					rules = rulef.read()
+				ruledict = readruledict(rules)
+				
+				textout = applyruledict(textin, ruledict)
+				name = data_in_name.rpartition('.')
+				data_out_name = applyruledict("~outputformat(filename:"+name[0]+",extension:"+name[1]+"){}", ruledict)
+				print(data_out_name)
+				with open(data_out_name, 'wt') as dataf:
+					dataf.write(textout)
 
 
 
