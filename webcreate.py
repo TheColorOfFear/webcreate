@@ -95,7 +95,7 @@ def parsetree(textin, tagchar, bracket=False):
 			elif (mode == "attribparse"):
 				if (eatenchar == ")" and not(escaped)):
 					mode = "wait-obrace"
-					attribs[attrib] = attribvalue
+					attribs[attrib.lstrip()] = attribvalue.lstrip()
 					treestack[-1].append(attribs)
 				elif (attribmode == "readattrib"):
 					if (eatenchar == ":" and not(escaped)):
@@ -105,7 +105,7 @@ def parsetree(textin, tagchar, bracket=False):
 						attrib = attrib + eatenchar
 				elif (attribmode == "readvalue"):
 					if (eatenchar == "," and not(escaped)):
-						attribs[attrib] = attribvalue
+						attribs[attrib.lstrip()] = attribvalue.lstrip()
 						attrib = ""
 						attribvalue = ""
 						attribmode = "readattrib"
@@ -214,9 +214,11 @@ def applyruledict(textin, ruledict):
 			for checkattrib in validruledict[tagname]['attributes']:
 				#print(checkattrib, validruledict[tagname]['$' + checkattrib + '$'])
 				if (checkattrib in treein[1]):
+					#print(checkattrib, treein[1][checkattrib])
 					textback = textback.replace('$' + checkattrib + '$', treein[1][checkattrib])
 				else:
-					textback = textback.replace('$' + checkattrib + '$', validruledict[tagname]['$' + checkattrib + '$'][checkattrib])
+					#print(validruledict[tagname])
+					textback = textback.replace('$' + checkattrib + '$', validruledict[tagname]['$'+checkattrib+'$'])
 		##TODO : replace $[SMTH]$ in the textback with attribs and then stuff it in the tag's $[output]$
 		#print('>' + treein[0])
 		return textback
@@ -243,7 +245,8 @@ if __name__ == "__main__":
 				
 				textout = applyruledict(textin, ruledict)
 				name = data_in_name.rpartition('.')
-				data_out_name = applyruledict("~outputformat(filename:"+name[0]+",extension:"+name[1]+"){}", ruledict)
+				nameform = "~outputformat(filename:"+name[0]+",extension:"+name[2]+"){}"
+				data_out_name = applyruledict(nameform, ruledict)
 				print(data_out_name)
 				with open(data_out_name, 'wt') as dataf:
 					dataf.write(textout)
