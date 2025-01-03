@@ -224,49 +224,38 @@ def applyruledict(textin, ruledict):
 		return textback
 	return recurse(tree, initial=True)
 
+def dofile(data_in_name, template_in_names):
+	with open(data_in_name) as dataf:
+		textin = dataf.read()
+	
+	for template_in_name in template_in_names:
+		print(data_in_name, template_in_name, end=' --> ')
+		with open(template_in_name) as rulef:
+			rules = rulef.read()
+		ruledict = readruledict(rules)
+		
+		textout = applyruledict(textin, ruledict)
+		name = data_in_name.rpartition('.')
+		nameform = "~outputformat(filename:"+name[0]+",extension:"+name[2]+"){}"
+		data_out_name = applyruledict(nameform, ruledict)
+		print(data_out_name)
+		with open(data_out_name, 'wt') as dataf:
+			dataf.write(textout)
+
 if __name__ == "__main__":
 	if ((len(sys.argv) == 1) or (sys.argv[1] in ["-h","-?","--help"])):
 		print("Usage: webcreate <--listing listing_file | data_file> [output_template ...]")
 	else:
 		if (sys.argv[1] == "--listing"):
-			print("#TODO")
+			listing_in_name = sys.argv[2]
+			with open(listing_in_name) as listingf:
+				listingin = listingf.read()
+			
+			listing = listingin.splitlines()
+			for line in listing:
+				if (line == '' or line[0] == '#'):
+					pass
+				else:
+					dofile(line, sys.argv[3:])
 		else:
-			data_in_name     = sys.argv[1]
-			template_in_names = sys.argv[2:]
-			
-			with open(data_in_name) as dataf:
-				textin = dataf.read()
-			
-			for template_in_name in template_in_names:
-				print(data_in_name, template_in_name, end=' --> ')
-				with open(template_in_name) as rulef:
-					rules = rulef.read()
-				ruledict = readruledict(rules)
-				
-				textout = applyruledict(textin, ruledict)
-				name = data_in_name.rpartition('.')
-				nameform = "~outputformat(filename:"+name[0]+",extension:"+name[2]+"){}"
-				data_out_name = applyruledict(nameform, ruledict)
-				print(data_out_name)
-				with open(data_out_name, 'wt') as dataf:
-					dataf.write(textout)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+			dofile(sys.argv[1], sys.argv[2:])
