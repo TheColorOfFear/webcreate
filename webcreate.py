@@ -1,4 +1,5 @@
 import sys
+import os
 
 #how this work??
 #take a data file, laid out as follows, where 
@@ -235,9 +236,13 @@ def dofile(data_in_name, template_in_names):
 		ruledict = readruledict(rules)
 		
 		textout = applyruledict(textin, ruledict)
-		name = data_in_name.rpartition('.')
+		path = os.path.split(data_in_name)
+		name = path[1].rpartition('.')
 		nameform = "~outputformat(filename:"+name[0]+",extension:"+name[2]+"){}"
-		data_out_name = applyruledict(nameform, ruledict)
+		data_out_list = applyruledict(nameform, ruledict).split("#")
+		data_out_name = path[0]
+		for chunk in data_out_list:
+			data_out_name = os.path.join(data_out_name, chunk)
 		print(data_out_name)
 		with open(data_out_name, 'wt') as dataf:
 			dataf.write(textout)
