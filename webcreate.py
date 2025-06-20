@@ -225,14 +225,37 @@ def applyruledict(textin, ruledict):
 		return textback
 	return recurse(tree, initial=True)
 
+def openfile(filename, errline=True):
+	try:
+		with open(filename) as f:
+			textin = f.read()
+	except UnicodeDecodeError:
+		print("UTF-8:", end="")
+		if errline:
+			print(filename)
+		with open(filename, encoding="utf8") as f:
+			textin = f.read()
+	return textin
+
+def writefile(filename, textout, errline=True):
+	try:
+		with open(filename, 'wt') as f:
+			f.write(textout)
+	except UnicodeEncodeError:
+		print("UTF-8:", end="")
+		if errline:
+			print(filename)
+		with open(filename, 'wt', encoding="utf8") as f:
+			f.write(textout)
+
 def dofile(data_in_name, template_in_names):
-	with open(data_in_name) as dataf:
-		textin = dataf.read()
+	textin = openfile(data_in_name)
 	
 	for template_in_name in template_in_names:
+		#with open(template_in_name) as rulef:
+		#	rules = rulef.read()
+		rules = openfile(template_in_name)
 		print(data_in_name, template_in_name, end=' --> ')
-		with open(template_in_name) as rulef:
-			rules = rulef.read()
 		ruledict = readruledict(rules)
 		
 		textout = applyruledict(textin, ruledict)
@@ -243,9 +266,8 @@ def dofile(data_in_name, template_in_names):
 		data_out_name = path[0]
 		for chunk in data_out_list:
 			data_out_name = os.path.join(data_out_name, chunk)
+		writefile(data_out_name, textout, errline=False)
 		print(data_out_name)
-		with open(data_out_name, 'wt') as dataf:
-			dataf.write(textout)
 
 if __name__ == "__main__":
 	if ((len(sys.argv) == 1) or (sys.argv[1] in ["-h","-?","--help"])):
