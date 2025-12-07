@@ -248,7 +248,7 @@ def writefile(filename, textout, errline=True):
 		with open(filename, 'wt', encoding="utf8") as f:
 			f.write(textout)
 
-def dofile(data_in_name, template_in_names):
+def dofile(data_in_name, template_in_names, preservePath=True, endPreserve=False):
 	textin = openfile(data_in_name)
 	
 	for template_in_name in template_in_names:
@@ -261,9 +261,16 @@ def dofile(data_in_name, template_in_names):
 		textout = applyruledict(textin, ruledict)
 		path = os.path.split(data_in_name)
 		name = path[1].rpartition('.')
+		if endPreserve and preservePath:
+			fname = path[0] + "#" + name[0]
+			print(fname)
+			name = [fname , name[1], name[2]]
 		nameform = "~outputformat(filename:"+name[0]+",extension:"+name[2]+"){}"
 		data_out_list = applyruledict(nameform, ruledict).split("#")
-		data_out_name = path[0]
+		if preservePath and not(endPreserve):
+			data_out_name = path[0]
+		else:
+			data_out_name = ""
 		for chunk in data_out_list:
 			data_out_name = os.path.join(data_out_name, chunk)
 		writefile(data_out_name, textout, errline=False)
@@ -271,10 +278,19 @@ def dofile(data_in_name, template_in_names):
 
 if __name__ == "__main__":
 	if ((len(sys.argv) == 1) or (sys.argv[1] in ["-h","-?","--help"])):
-		print("Usage: webcreate <--listing listing_file | data_file> [output_template ...]")
+		print("Usage: webcreate [--no-preserve-path] <--listing listing_file | data_file> [output_template ...]")
 	else:
-		if (sys.argv[1] == "--listing"):
-			listing_in_name = sys.argv[2]
+		args = sys.argv[1:]
+		options = {
+			"preservePath"	: True,
+			"endPreserve"	: True
+		}
+		while args[0] in ["--no-preserve-path"]:
+			if args[0] == "--no-preserve-path":
+				options["preservePath"] = False
+				args.pop(0)
+		if (args[0] == "--listing"):
+			listing_in_name = args[1]
 			with open(listing_in_name) as listingf:
 				listingin = listingf.read()
 			
@@ -283,6 +299,6 @@ if __name__ == "__main__":
 				if (line == '' or line[0] == '#'):
 					pass
 				else:
-					dofile(line, sys.argv[3:])
+					dofile(line, args[2:], preservePath=options["preservePath"], endPreserve=options["endPreserve"])
 		else:
-			dofile(sys.argv[1], sys.argv[2:])
+			dofile(args[0], args[1:], preservePath=options["preservePath"], endPreserve=options["endPreserve"])
